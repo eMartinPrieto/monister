@@ -19,14 +19,10 @@
 
   /* ---- Plato de DJ ---- */
   .deck { position: relative; width: 230px; height: 230px; margin: 4px auto 10px; }
-  .deck-glow {
-    position: absolute; inset: -6px; border-radius: 50%;
-    box-shadow: 0 0 35px 6px var(--neon); opacity: 0; transition: opacity .4s;
-  }
+  .deck-glow { position: absolute; inset: -6px; border-radius: 50%; box-shadow: 0 0 35px 6px var(--neon); opacity: 0; transition: opacity .4s; }
   .record {
     position: absolute; inset: 8px; border-radius: 50%; background: #050505;
-    background-image: repeating-radial-gradient(circle at 50% 50%,
-      rgba(255,255,255,.06) 0 1px, transparent 1px 4px);
+    background-image: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.06) 0 1px, transparent 1px 4px);
     box-shadow: inset 0 0 50px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.18);
     display: flex; align-items: center; justify-content: center;
     animation: spin 2.2s linear infinite; animation-play-state: paused;
@@ -34,9 +30,8 @@
   .label {
     width: 80px; height: 80px; border-radius: 50%;
     background: radial-gradient(circle at 50% 50%, var(--neon), #b30e63);
-    box-shadow: 0 0 0 4px #000;
-    display: flex; align-items: center; justify-content: center; position: relative;
-    color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 1px;
+    box-shadow: 0 0 0 4px #000; display: flex; align-items: center; justify-content: center;
+    position: relative; color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 1px;
   }
   .label span { transform: translateY(-1px); }
   .label::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #000; }
@@ -55,26 +50,30 @@
 
   /* ---- Controles ---- */
   .controls { width: 100%; max-width: 360px; }
-  button {
-    font-size: 17px; padding: 15px; width: 100%; margin: 7px 0;
-    border-radius: 12px; cursor: pointer; font-weight: 600;
-    background: transparent; color: #fff; border: 2px solid #fff;
-    transition: transform .05s ease, background .15s ease, color .15s ease;
-  }
+  button { font-size: 17px; padding: 15px; width: 100%; margin: 7px 0; border-radius: 12px; cursor: pointer;
+    font-weight: 600; background: transparent; color: #fff; border: 2px solid #fff;
+    transition: transform .05s ease, background .15s ease, color .15s ease; }
   button:active { transform: scale(.98); }
-  #nueva { background: #fff; color: #000; border-color: #fff; }
+  #nueva { background: #fff; color: #000; }
   button:focus-visible { outline: 3px solid var(--neon); outline-offset: 2px; }
 
   #estado { margin-top: 16px; min-height: 22px; font-size: 15px; color: #ddd; white-space: pre-line; }
-  #respuesta {
-    margin-top: 16px; max-width: 360px; width: 100%;
-    padding: 16px; border: 2px solid #fff; border-radius: 12px;
-    font-weight: 700; font-size: 16px; display: none;
-  }
+  #respuesta { margin-top: 16px; max-width: 360px; width: 100%; padding: 16px; border: 2px solid #fff;
+    border-radius: 12px; font-size: 17px; display: none; line-height: 1.5; }
+  #respuesta strong { font-size: 19px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .record { animation: none; } .tonearm { transition: none; }
-  }
+  .acierto { margin-top: 14px; display: none; }
+  .acierto p { margin: 0 0 8px; color: #ddd; }
+  .yn { display: flex; gap: 10px; max-width: 360px; margin: 0 auto; }
+  .yn-btn { margin: 0; }
+
+  #stats { margin-top: 18px; color: #888; font-size: 13px; }
+  .falladas-bar { margin-top: 6px; color: #aaa; font-size: 13px; display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .mini { font-size: 13px; padding: 6px 10px; width: auto; margin: 0; border-width: 1px; border-radius: 8px; }
+  #lista-falladas { margin-top: 10px; max-width: 360px; width: 100%; font-size: 13px; color: #ccc; text-align: left; display: none; }
+  #lista-falladas li { margin: 4px 0; }
+
+  @media (prefers-reduced-motion: reduce) { .record { animation: none; } .tonearm { transition: none; } }
 </style>
 </head>
 <body>
@@ -96,13 +95,53 @@
   <div id="estado">Pulsa "Nueva canción" para empezar.</div>
   <div id="respuesta"></div>
 
+  <div class="acierto" id="acierto">
+    <p>¿Has acertado?</p>
+    <div class="yn">
+      <button class="yn-btn" id="si">Sí</button>
+      <button class="yn-btn" id="no">No</button>
+    </div>
+  </div>
+
+  <div id="stats">Aciertos: 0 · Fallos: 0</div>
+  <div class="falladas-bar">
+    Falladas: <span id="fcount">0</span>
+    <button class="mini" id="ver">Ver</button>
+    <button class="mini" id="descargar">Descargar</button>
+    <button class="mini" id="vaciar">Vaciar</button>
+  </div>
+  <ol id="lista-falladas"></ol>
+
 <script>
 const deck = document.getElementById('deck');
 const estado = document.getElementById('estado');
 const respuesta = document.getElementById('respuesta');
+const acierto = document.getElementById('acierto');
+const statsEl = document.getElementById('stats');
+const fcount = document.getElementById('fcount');
+const listaEl = document.getElementById('lista-falladas');
 let cancion = null;
 let audio = null;
 
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---- almacenamiento local ---- */
+function getFalladas(){ try { return JSON.parse(localStorage.getItem('monister_falladas')||'[]'); } catch(e){ return []; } }
+function setFalladas(a){ localStorage.setItem('monister_falladas', JSON.stringify(a)); }
+function getStats(){ try { return JSON.parse(localStorage.getItem('monister_stats')||'{"ok":0,"ko":0}'); } catch(e){ return {ok:0,ko:0}; } }
+function setStats(s){ localStorage.setItem('monister_stats', JSON.stringify(s)); }
+
+function pintarStats(){
+  const s = getStats();
+  statsEl.textContent = 'Aciertos: ' + s.ok + ' · Fallos: ' + s.ko;
+  fcount.textContent = getFalladas().length;
+}
+function pintarLista(){
+  const f = getFalladas();
+  listaEl.innerHTML = f.length ? f.map(x => '<li><b>'+esc(x.title)+'</b>, '+esc(x.artist)+' ('+x.year+')</li>').join('') : '<li>(vacío)</li>';
+}
+
+/* ---- audio (iTunes) ---- */
 function buscarItunes(termino) {
   return new Promise((resolve, reject) => {
     const cb = 'cb_' + Math.random().toString(36).slice(2);
@@ -116,12 +155,7 @@ function buscarItunes(termino) {
     document.body.appendChild(script);
   });
 }
-
-function pararAudio() {
-  if (audio) { audio.pause(); audio = null; }
-  deck.classList.remove('playing');
-}
-
+function pararAudio() { if (audio) { audio.pause(); audio = null; } deck.classList.remove('playing'); }
 function sonar() {
   pararAudio();
   audio = new Audio(cancion._preview);
@@ -138,22 +172,16 @@ async function nuevaCancion() {
   }
   pararAudio();
   respuesta.style.display = 'none';
+  acierto.style.display = 'none';
   estado.textContent = 'Cargando…';
   cancion = SONGS[Math.floor(Math.random() * SONGS.length)];
-
   if (!cancion._preview) {
     try {
       const res = await buscarItunes(cancion.artist + ' ' + cancion.title);
       const hit = res.find(r => r.previewUrl);
-      if (!hit) {
-        estado.textContent = '😕 Sin preview en iTunes:\n' + cancion.artist + ' – ' + cancion.title;
-        return;
-      }
+      if (!hit) { estado.textContent = '😕 Sin preview en iTunes:\n' + cancion.title + ', ' + cancion.artist; return; }
       cancion._preview = hit.previewUrl;
-    } catch (e) {
-      estado.textContent = 'Error de red (' + e.message + '). ¿Tienes conexión?';
-      return;
-    }
+    } catch (e) { estado.textContent = 'Error de red (' + e.message + '). ¿Tienes conexión?'; return; }
   }
   sonar();
 }
@@ -161,12 +189,58 @@ async function nuevaCancion() {
 function revelar() {
   if (!cancion || !cancion._preview) return;
   respuesta.style.display = 'block';
-  respuesta.textContent = '✅ ' + cancion.artist + ' – ' + cancion.title + ' (' + cancion.year + ')';
+  respuesta.innerHTML = '<strong>' + esc(cancion.title) + '</strong>, ' + esc(cancion.artist) + ' (' + cancion.year + ')';
+  acierto.style.display = 'block';
+}
+
+function responder(acertada) {
+  const s = getStats();
+  if (acertada) { s.ok++; estado.textContent = '✅ ¡Bien!'; }
+  else {
+    s.ko++;
+    const f = getFalladas();
+    if (!f.some(x => x.artist === cancion.artist && x.title === cancion.title)) {
+      f.push({ artist: cancion.artist, title: cancion.title, year: cancion.year });
+      setFalladas(f);
+    }
+    estado.textContent = '📝 Guardada en falladas.';
+  }
+  setStats(s);
+  acierto.style.display = 'none';
+  pintarStats(); pintarLista();
+}
+
+function descargarFalladas() {
+  const f = getFalladas();
+  if (!f.length) { estado.textContent = 'No hay canciones falladas todavía.'; return; }
+  const filas = f.map(s => {
+    const q = encodeURIComponent(s.artist + ' ' + s.title);
+    return '<li><b>' + esc(s.title) + '</b>, ' + esc(s.artist) + ' (' + s.year + ') ' +
+      '&nbsp;<a href="https://www.youtube.com/results?search_query=' + q + '" target="_blank">YouTube</a>' +
+      '&nbsp;<a href="https://open.spotify.com/search/' + q + '" target="_blank">Spotify</a></li>';
+  }).join('\n');
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Monister – Falladas</title>' +
+    '<style>body{font-family:system-ui;background:#000;color:#fff;padding:24px;line-height:1.6}a{color:#ff2d87}li{margin:8px 0}</style>' +
+    '</head><body><h1>Canciones falladas (' + f.length + ')</h1><ol>' + filas + '</ol></body></html>';
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'falladas.html'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 document.getElementById('nueva').addEventListener('click', nuevaCancion);
 document.getElementById('repetir').addEventListener('click', () => { if (cancion && cancion._preview) sonar(); });
 document.getElementById('revelar').addEventListener('click', revelar);
+document.getElementById('si').addEventListener('click', () => responder(true));
+document.getElementById('no').addEventListener('click', () => responder(false));
+document.getElementById('ver').addEventListener('click', () => {
+  listaEl.style.display = listaEl.style.display === 'block' ? 'none' : 'block';
+});
+document.getElementById('descargar').addEventListener('click', descargarFalladas);
+document.getElementById('vaciar').addEventListener('click', () => {
+  if (confirm('¿Vaciar la lista de falladas?')) { setFalladas([]); pintarStats(); pintarLista(); }
+});
+
+pintarStats(); pintarLista();
 </script>
 <script src="songs.js"></script>
 </body>
