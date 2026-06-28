@@ -5,243 +5,290 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monister</title>
 <style>
-  :root { --neon: #ff2d87; }
-  * { box-sizing: border-box; }
-  body {
-    background: #000; color: #fff;
-    font-family: system-ui, -apple-system, sans-serif;
-    margin: 0; min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 24px 18px 40px; text-align: center;
-  }
-  .logo { width: 55%; max-width: 200px; margin-bottom: 8px; }
-  .sub { color: #888; font-size: 13px; margin: 0 0 18px; }
+  :root { --neon:#ff2d87; }
+  * { box-sizing:border-box; }
+  body { background:#000; color:#fff; font-family:system-ui,-apple-system,sans-serif; margin:0;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px 18px 40px; text-align:center; }
 
-  /* ---- Plato de DJ ---- */
-  .deck { position: relative; width: 230px; height: 230px; margin: 4px auto 10px; }
-  .deck-glow { position: absolute; inset: -6px; border-radius: 50%; box-shadow: 0 0 35px 6px var(--neon); opacity: 0; transition: opacity .4s; }
-  .record {
-    position: absolute; inset: 8px; border-radius: 50%; background: #050505;
-    background-image: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.06) 0 1px, transparent 1px 4px);
-    box-shadow: inset 0 0 50px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.18);
-    display: flex; align-items: center; justify-content: center;
-    animation: spin 2.2s linear infinite; animation-play-state: paused;
-  }
-  .label {
-    width: 80px; height: 80px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 50%, var(--neon), #b30e63);
-    box-shadow: 0 0 0 4px #000; display: flex; align-items: center; justify-content: center;
-    position: relative; color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 1px;
-  }
-  .label span { transform: translateY(-1px); }
-  .label::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #000; }
-  .tonearm {
-    position: absolute; top: 6px; right: 2px; width: 110px; height: 7px;
-    background: linear-gradient(90deg, #777, #fff); border-radius: 6px; z-index: 3;
-    transform-origin: calc(100% - 7px) 50%; transform: rotate(-34deg);
-    transition: transform .6s ease; box-shadow: 0 2px 6px rgba(0,0,0,.6);
-  }
-  .tonearm::before { content: ""; position: absolute; right: -7px; top: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ccc; }
-  .tonearm::after  { content: ""; position: absolute; left: -4px; top: -3px; width: 14px; height: 13px; border-radius: 3px; background: #eee; }
-  .playing .record  { animation-play-state: running; }
-  .playing .tonearm { transform: rotate(-13deg); }
-  .playing .deck-glow { opacity: 1; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* ---- Disco DJ (logo + vinilo + aguja en una pieza) ---- */
+  .disc { position:relative; width:210px; height:210px; margin:4px auto 12px; }
+  .deck-glow { position:absolute; inset:-6px; border-radius:50%; box-shadow:0 0 34px 6px var(--neon); opacity:0; transition:opacity .4s; }
+  .vinyl { position:absolute; inset:0; border-radius:50%; background:#070707;
+    background-image:repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 1px, transparent 1px 4px);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.12);
+    animation:spin 2.4s linear infinite; animation-play-state:paused; }
+  .arcs { position:absolute; inset:0; width:100%; height:100%; }
+  /* Centro estático: AQUÍ irá tu logo solo-texto. De momento, texto CSS. */
+  .label-c { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .label-c span { font-weight:800; font-size:17px; letter-spacing:3px; color:#fff; text-shadow:0 0 6px var(--neon),0 0 13px var(--neon); }
+  .needle { position:absolute; top:0; right:-2px; width:94px; height:6px; background:linear-gradient(90deg,#777,#fff);
+    border-radius:6px; z-index:4; transform-origin:calc(100% - 6px) 50%; transform:rotate(-32deg);
+    transition:transform .6s ease; box-shadow:0 2px 6px rgba(0,0,0,.6); }
+  .needle::before { content:""; position:absolute; right:-6px; top:-5px; width:17px; height:17px; border-radius:50%; background:#ccc; }
+  .needle::after  { content:""; position:absolute; left:-4px; top:-3px; width:13px; height:12px; border-radius:3px; background:#eee; }
+  #deck.playing .vinyl { animation-play-state:running; }
+  #deck.playing .deck-glow { opacity:1; }
+  #deck.playing .needle { transform:rotate(-12deg); }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ---- Controles ---- */
-  .controls { width: 100%; max-width: 360px; }
-  button { font-size: 17px; padding: 15px; width: 100%; margin: 7px 0; border-radius: 12px; cursor: pointer;
-    font-weight: 600; background: transparent; color: #fff; border: 2px solid #fff;
-    transition: transform .05s ease, background .15s ease, color .15s ease; }
-  button:active { transform: scale(.98); }
-  #nueva { background: #fff; color: #000; }
-  button:focus-visible { outline: 3px solid var(--neon); outline-offset: 2px; }
+  .panel { width:100%; max-width:380px; }
+  button { font-size:17px; padding:14px; width:100%; margin:7px 0; border-radius:12px; cursor:pointer;
+    font-weight:600; background:transparent; color:#fff; border:2px solid #fff;
+    transition:transform .05s ease, background .15s ease, color .15s ease; }
+  button:active { transform:scale(.98); }
+  #m-libre, #m-temporal, #m-decadas, #m-fallos, #nueva { background:#fff; color:#000; }
+  button:focus-visible { outline:3px solid var(--neon); outline-offset:2px; }
+  .hint { color:#888; font-size:13px; line-height:1.5; margin-top:12px; }
+  .titulo { font-size:14px; color:var(--neon); font-weight:700; margin:2px 0 10px; letter-spacing:.5px; }
 
-  #estado { margin-top: 16px; min-height: 22px; font-size: 15px; color: #ddd; white-space: pre-line; }
-  #respuesta { margin-top: 16px; max-width: 360px; width: 100%; padding: 16px; border: 2px solid #fff;
-    border-radius: 12px; font-size: 17px; display: none; line-height: 1.5; }
-  #respuesta strong { font-size: 19px; }
+  #estado { margin-top:14px; min-height:22px; font-size:15px; color:#ddd; white-space:pre-line; }
+  #respuesta { margin-top:14px; padding:16px; border:2px solid #fff; border-radius:12px; font-size:17px; display:none; line-height:1.5; }
+  #respuesta strong { font-size:19px; }
+  .acierto { margin-top:14px; display:none; }
+  .acierto p { margin:0 0 8px; color:#ddd; }
+  .yn { display:flex; gap:10px; }
+  .yn-btn { margin:0; }
 
-  .acierto { margin-top: 14px; display: none; }
-  .acierto p { margin: 0 0 8px; color: #ddd; }
-  .yn { display: flex; gap: 10px; max-width: 360px; margin: 0 auto; }
-  .yn-btn { margin: 0; }
+  .estado2 { color:#ddd; font-size:14px; margin-bottom:8px; }
+  .tl { display:flex; gap:8px; overflow-x:auto; padding:6px 2px 12px; }
+  .card { flex:0 0 auto; min-width:92px; border:2px solid #fff; border-radius:10px; padding:8px 6px; }
+  .card .yr { font-size:22px; font-weight:800; }
+  .card .ti { font-size:10px; color:#aaa; margin-top:4px; max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .slot { border-color:var(--neon); }
+  #t-result { margin-top:12px; font-size:16px; line-height:1.5; }
+  #t-result strong { font-size:18px; }
+  .back { margin-top:14px; }
+  .mini { font-size:13px; padding:6px 10px; width:auto; margin:0; border-width:1px; border-radius:8px; }
 
-  #stats { margin-top: 18px; color: #888; font-size: 13px; }
-  .falladas-bar { margin-top: 6px; color: #aaa; font-size: 13px; display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
-  .mini { font-size: 13px; padding: 6px 10px; width: auto; margin: 0; border-width: 1px; border-radius: 8px; }
-  #lista-falladas { margin-top: 10px; max-width: 360px; width: 100%; font-size: 13px; color: #ccc; text-align: left; display: none; }
-  #lista-falladas li { margin: 4px 0; }
-
-  @media (prefers-reduced-motion: reduce) { .record { animation: none; } .tonearm { transition: none; } }
+  #stats { margin-top:22px; color:#888; font-size:13px; }
+  .falladas-bar { margin-top:6px; color:#aaa; font-size:13px; display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  #lista-falladas { margin-top:10px; max-width:380px; width:100%; font-size:13px; color:#ccc; text-align:left; display:none; }
+  #lista-falladas li { margin:4px 0; }
+  @media (prefers-reduced-motion: reduce) { .vinyl { animation:none; } .needle { transition:none; } }
 </style>
 </head>
 <body>
-  <img class="logo" src="monister-logo.png" alt="Monister">
-  <p class="sub">Entrenamiento musical</p>
-
-  <div class="deck" id="deck">
+  <div class="disc" id="deck">
     <div class="deck-glow"></div>
-    <div class="record"><div class="label"><span>MONISTER</span></div></div>
-    <div class="tonearm"></div>
+    <div class="vinyl">
+      <svg class="arcs" viewBox="0 0 220 220" aria-hidden="true">
+        <circle cx="110" cy="110" r="104" fill="none" stroke="#ff2d87" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="250 110 180 113" style="filter:drop-shadow(0 0 3px #ff2d87)"/>
+        <circle cx="110" cy="110" r="92"  fill="none" stroke="#ffd400" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="150 90 210 128" style="filter:drop-shadow(0 0 3px #ffd400)"/>
+        <circle cx="110" cy="110" r="80"  fill="none" stroke="#22b8ff" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="120 80 60 90 130 122" style="filter:drop-shadow(0 0 3px #22b8ff)"/>
+        <circle cx="110" cy="110" r="69"  fill="none" stroke="#ff6b1a" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="70 60 90 213" style="filter:drop-shadow(0 0 3px #ff6b1a)"/>
+      </svg>
+    </div>
+    <!-- Para tu logo: cambia el <span> de abajo por <img src="monister-text.png" style="width:120px"> -->
+    <div class="label-c"><span>MONISTER</span></div>
+    <div class="needle"></div>
   </div>
 
-  <div class="controls">
+  <!-- MENÚ -->
+  <div id="menu" class="panel">
+    <button id="m-libre">🎧 Modo libre</button>
+    <button id="m-temporal">📅 Modo temporal</button>
+    <button id="m-decadas">🗓️ Por décadas</button>
+    <button id="m-fallos">📝 Solo fallos</button>
+    <p class="hint">Libre: ¿te la sabes? · Temporal: ordena 5 por año · Décadas: practica una época · Fallos: repasa lo que fallaste.</p>
+  </div>
+
+  <!-- SUBMENÚ DÉCADAS -->
+  <div id="decadas-menu" class="panel" style="display:none">
+    <p class="titulo">Elige década</p>
+    <div id="decadas-list"></div>
+    <button class="mini back" data-back>← Menú</button>
+  </div>
+
+  <!-- MODO LIBRE / DÉCADAS / FALLOS (comparten pantalla) -->
+  <div id="libre" class="panel" style="display:none">
+    <p class="titulo" id="libre-titulo">Modo libre</p>
     <button id="nueva">▶ Nueva canción</button>
     <button id="repetir">🔁 Repetir</button>
     <button id="revelar">👁 Revelar</button>
-  </div>
-
-  <div id="estado">Pulsa "Nueva canción" para empezar.</div>
-  <div id="respuesta"></div>
-
-  <div class="acierto" id="acierto">
-    <p>¿Has acertado?</p>
-    <div class="yn">
-      <button class="yn-btn" id="si">Sí</button>
-      <button class="yn-btn" id="no">No</button>
+    <div id="estado">Pulsa "Nueva canción" para empezar.</div>
+    <div id="respuesta"></div>
+    <div class="acierto" id="acierto">
+      <p>¿Has acertado?</p>
+      <div class="yn"><button class="yn-btn" id="si">Sí</button><button class="yn-btn" id="no">No</button></div>
     </div>
+    <button class="mini back" data-back>← Menú</button>
   </div>
 
+  <!-- MODO TEMPORAL -->
+  <div id="temporal" class="panel" style="display:none">
+    <div id="t-estado" class="estado2">Carta de partida</div>
+    <div class="tl" id="tl"></div>
+    <div id="t-now">
+      <div id="t-msg" class="estado2">Escucha y coloca la canción.</div>
+      <button id="t-play">🔊 Escuchar</button>
+      <button id="t-rep">🔁 Repetir</button>
+      <div id="t-slots"></div>
+    </div>
+    <div id="t-result"></div>
+    <button class="mini back" data-back>← Menú</button>
+  </div>
+
+  <!-- COMPARTIDO -->
   <div id="stats">Aciertos: 0 · Fallos: 0</div>
-  <div class="falladas-bar">
-    Falladas: <span id="fcount">0</span>
+  <div class="falladas-bar">Falladas: <span id="fcount">0</span>
     <button class="mini" id="ver">Ver</button>
     <button class="mini" id="descargar">Descargar</button>
     <button class="mini" id="vaciar">Vaciar</button>
   </div>
   <ol id="lista-falladas"></ol>
 
+<script src="songs.js"></script>
 <script>
-const deck = document.getElementById('deck');
-const estado = document.getElementById('estado');
-const respuesta = document.getElementById('respuesta');
-const acierto = document.getElementById('acierto');
-const statsEl = document.getElementById('stats');
-const fcount = document.getElementById('fcount');
-const listaEl = document.getElementById('lista-falladas');
-let cancion = null;
-let audio = null;
+const deck=document.getElementById('deck');
+const estado=document.getElementById('estado');
+const respuesta=document.getElementById('respuesta');
+const acierto=document.getElementById('acierto');
+const statsEl=document.getElementById('stats');
+const fcount=document.getElementById('fcount');
+const listaEl=document.getElementById('lista-falladas');
+const HAS=(typeof SONGS!=='undefined')&&Array.isArray(SONGS);
+let audio=null, cancion=null, currentPool=[], currentMode='libre', T=null;
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function keyOf(s){ return s.artist+'||'+s.title; }
 
-/* ---- almacenamiento local ---- */
-function getFalladas(){ try { return JSON.parse(localStorage.getItem('monister_falladas')||'[]'); } catch(e){ return []; } }
-function setFalladas(a){ localStorage.setItem('monister_falladas', JSON.stringify(a)); }
-function getStats(){ try { return JSON.parse(localStorage.getItem('monister_stats')||'{"ok":0,"ko":0}'); } catch(e){ return {ok:0,ko:0}; } }
-function setStats(s){ localStorage.setItem('monister_stats', JSON.stringify(s)); }
+/* almacenamiento */
+function getJSON(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
+function getFalladas(){ return getJSON('monister_falladas','[]'); }
+function setFalladas(a){ localStorage.setItem('monister_falladas',JSON.stringify(a)); }
+function getStats(){ return getJSON('monister_stats','{"ok":0,"ko":0}'); }
+function setStats(s){ localStorage.setItem('monister_stats',JSON.stringify(s)); }
+function getPlays(){ return getJSON('monister_plays','{}'); }
+function incPlay(s){ const p=getPlays(); p[keyOf(s)]=(p[keyOf(s)]||0)+1; localStorage.setItem('monister_plays',JSON.stringify(p)); }
+function addFallada(c){ const f=getFalladas(); if(!f.some(x=>x.artist===c.artist&&x.title===c.title)){ f.push({artist:c.artist,title:c.title,year:c.year}); setFalladas(f); } }
+function removeFallada(c){ setFalladas(getFalladas().filter(x=>!(x.artist===c.artist&&x.title===c.title))); }
+function pintarStats(){ const s=getStats(); statsEl.textContent='Aciertos: '+s.ok+' · Fallos: '+s.ko; fcount.textContent=getFalladas().length; }
+function pintarLista(){ const f=getFalladas(); listaEl.innerHTML=f.length?f.map(x=>'<li><b>'+esc(x.title)+'</b>, '+esc(x.artist)+' ('+x.year+')</li>').join(''):'<li>(vacío)</li>'; }
 
-function pintarStats(){
-  const s = getStats();
-  statsEl.textContent = 'Aciertos: ' + s.ok + ' · Fallos: ' + s.ko;
-  fcount.textContent = getFalladas().length;
-}
-function pintarLista(){
-  const f = getFalladas();
-  listaEl.innerHTML = f.length ? f.map(x => '<li><b>'+esc(x.title)+'</b>, '+esc(x.artist)+' ('+x.year+')</li>').join('') : '<li>(vacío)</li>';
-}
+/* selección por menos reproducidas */
+function leastPlayed(pool){ const p=getPlays(); return pool.map(s=>({s,c:(p[keyOf(s)]||0)})).sort((a,b)=>a.c-b.c||Math.random()-0.5).map(x=>x.s); }
 
-/* ---- audio (iTunes) ---- */
-function buscarItunes(termino) {
-  return new Promise((resolve, reject) => {
-    const cb = 'cb_' + Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    const t = setTimeout(() => { limpiar(); reject(new Error('tiempo agotado')); }, 8000);
-    function limpiar() { clearTimeout(t); delete window[cb]; script.remove(); }
-    window[cb] = (data) => { limpiar(); resolve(data.results || []); };
-    script.onerror = () => { limpiar(); reject(new Error('red')); };
-    script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(termino) +
-                 '&media=music&entity=song&limit=5&callback=' + cb;
-    document.body.appendChild(script);
-  });
-}
-function pararAudio() { if (audio) { audio.pause(); audio = null; } deck.classList.remove('playing'); }
-function sonar() {
-  pararAudio();
-  audio = new Audio(cancion._preview);
-  audio.play()
-    .then(() => { deck.classList.add('playing'); estado.textContent = '🔊 Sonando 4 segundos… ¿qué canción es?'; })
-    .catch(e => estado.textContent = 'No se pudo reproducir: ' + e.message);
-  setTimeout(pararAudio, 4000);
-}
+/* audio iTunes */
+function buscarItunes(t){ return new Promise((resolve,reject)=>{
+  const cb='cb_'+Math.random().toString(36).slice(2); const sc=document.createElement('script');
+  const to=setTimeout(()=>{cl();reject(new Error('tiempo'));},8000);
+  function cl(){ clearTimeout(to); delete window[cb]; sc.remove(); }
+  window[cb]=d=>{ cl(); resolve(d.results||[]); };
+  sc.onerror=()=>{ cl(); reject(new Error('red')); };
+  sc.src='https://itunes.apple.com/search?term='+encodeURIComponent(t)+'&media=music&entity=song&limit=5&callback='+cb;
+  document.body.appendChild(sc);
+}); }
+async function ensurePreview(s){ if(s._preview!==undefined) return s._preview;
+  try{ const r=await buscarItunes(s.artist+' '+s.title); const h=r.find(x=>x.previewUrl); s._preview=h?h.previewUrl:null; }
+  catch(e){ s._preview=null; } return s._preview; }
+async function pickPlayableOne(pool){ for(const s of leastPlayed(pool)){ const p=await ensurePreview(s); if(p) return s; } return null; }
+function pararAudio(){ if(audio){ audio.pause(); audio=null; } deck.classList.remove('playing'); }
+function play4(url){ pararAudio(); audio=new Audio(url); audio.play().then(()=>deck.classList.add('playing')).catch(()=>{}); setTimeout(pararAudio,4000); }
 
-async function nuevaCancion() {
-  if (typeof SONGS === 'undefined' || !SONGS.length) {
-    estado.textContent = 'No encuentro songs.js (o está vacío). Ponlo en la misma carpeta.';
-    return;
-  }
-  pararAudio();
-  respuesta.style.display = 'none';
-  acierto.style.display = 'none';
-  estado.textContent = 'Cargando…';
-  cancion = SONGS[Math.floor(Math.random() * SONGS.length)];
-  if (!cancion._preview) {
-    try {
-      const res = await buscarItunes(cancion.artist + ' ' + cancion.title);
-      const hit = res.find(r => r.previewUrl);
-      if (!hit) { estado.textContent = '😕 Sin preview en iTunes:\n' + cancion.title + ', ' + cancion.artist; return; }
-      cancion._preview = hit.previewUrl;
-    } catch (e) { estado.textContent = 'Error de red (' + e.message + '). ¿Tienes conexión?'; return; }
-  }
-  sonar();
-}
+/* navegación */
+function showPanel(id){ ['menu','decadas-menu','libre','temporal'].forEach(p=>document.getElementById(p).style.display=p===id?'block':'none'); pararAudio(); }
 
-function revelar() {
-  if (!cancion || !cancion._preview) return;
-  respuesta.style.display = 'block';
-  respuesta.innerHTML = '<strong>' + esc(cancion.title) + '</strong>, ' + esc(cancion.artist) + ' (' + cancion.year + ')';
-  acierto.style.display = 'block';
+/* ---- LIBRE / DÉCADAS / FALLOS ---- */
+function enterLibre(mode,pool,titulo){
+  currentMode=mode; currentPool=pool;
+  document.getElementById('libre-titulo').textContent=titulo;
+  respuesta.style.display='none'; acierto.style.display='none'; cancion=null;
+  estado.textContent='Pulsa "Nueva canción" para empezar.';
+  showPanel('libre');
+}
+async function nuevaCancion(){
+  if(!currentPool.length){ estado.textContent='No hay canciones en este modo.'; return; }
+  pararAudio(); respuesta.style.display='none'; acierto.style.display='none'; estado.textContent='Cargando…';
+  const s=await pickPlayableOne(currentPool);
+  if(!s){ estado.textContent='😕 No encuentro preview en este grupo.'; return; }
+  cancion=s; incPlay(s); play4(s._preview); estado.textContent='🔊 Sonando 4 segundos… ¿qué canción es?';
+}
+function revelar(){ if(!cancion||!cancion._preview) return;
+  respuesta.style.display='block';
+  respuesta.innerHTML='<strong>'+esc(cancion.title)+'</strong>, '+esc(cancion.artist)+' ('+cancion.year+')';
+  acierto.style.display='block';
+}
+function responder(ok){ const s=getStats();
+  if(ok){ s.ok++; if(currentMode==='fallos'){ removeFallada(cancion); estado.textContent='✅ ¡Bien! Fuera de falladas.'; } else estado.textContent='✅ ¡Bien!'; }
+  else { s.ko++; addFallada(cancion); estado.textContent=(currentMode==='fallos')?'📝 Sigue en falladas.':'📝 Guardada en falladas.'; }
+  setStats(s); acierto.style.display='none'; pintarStats(); pintarLista();
 }
 
-function responder(acertada) {
-  const s = getStats();
-  if (acertada) { s.ok++; estado.textContent = '✅ ¡Bien!'; }
-  else {
-    s.ko++;
-    const f = getFalladas();
-    if (!f.some(x => x.artist === cancion.artist && x.title === cancion.title)) {
-      f.push({ artist: cancion.artist, title: cancion.title, year: cancion.year });
-      setFalladas(f);
-    }
-    estado.textContent = '📝 Guardada en falladas.';
-  }
-  setStats(s);
-  acierto.style.display = 'none';
-  pintarStats(); pintarLista();
+/* ---- DÉCADAS ---- */
+function buildDecades(){
+  if(!HAS) return; const counts={};
+  SONGS.forEach(s=>{ const d=Math.floor(s.year/10)*10; counts[d]=(counts[d]||0)+1; });
+  const ds=Object.keys(counts).map(Number).sort((a,b)=>a-b);
+  const wrap=document.getElementById('decadas-list'); wrap.innerHTML='';
+  ds.forEach(d=>{ const label='Años '+(d>=2000?d:String(d).slice(2));
+    const b=document.createElement('button'); b.textContent=label+' · '+counts[d];
+    b.addEventListener('click',()=>{ const pool=SONGS.filter(s=>Math.floor(s.year/10)*10===d); enterLibre('decadas',pool,label+' · '+pool.length); });
+    wrap.appendChild(b); });
 }
 
-function descargarFalladas() {
-  const f = getFalladas();
-  if (!f.length) { estado.textContent = 'No hay canciones falladas todavía.'; return; }
-  const filas = f.map(s => {
-    const q = encodeURIComponent(s.artist + ' ' + s.title);
-    return '<li><b>' + esc(s.title) + '</b>, ' + esc(s.artist) + ' (' + s.year + ') ' +
-      '&nbsp;<a href="https://www.youtube.com/results?search_query=' + q + '" target="_blank">YouTube</a>' +
-      '&nbsp;<a href="https://open.spotify.com/search/' + q + '" target="_blank">Spotify</a></li>';
-  }).join('\n');
-  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Monister – Falladas</title>' +
-    '<style>body{font-family:system-ui;background:#000;color:#fff;padding:24px;line-height:1.6}a{color:#ff2d87}li{margin:8px 0}</style>' +
-    '</head><body><h1>Canciones falladas (' + f.length + ')</h1><ol>' + filas + '</ol></body></html>';
-  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-  const a = document.createElement('a'); a.href = url; a.download = 'falladas.html'; a.click();
-  URL.revokeObjectURL(url);
+/* ---- TEMPORAL ---- */
+async function startTemporal(){
+  if(!HAS||SONGS.length<5){ document.getElementById('t-msg').textContent='Necesito 5+ canciones en songs.js.'; return; }
+  document.getElementById('t-result').innerHTML=''; document.getElementById('tl').innerHTML='';
+  document.getElementById('t-now').style.display='block';
+  document.getElementById('t-msg').textContent='Cargando ronda…';
+  const picks=[];
+  for(const s of leastPlayed(SONGS)){ if(picks.length>=5) break; const p=await ensurePreview(s); if(p) picks.push({artist:s.artist,title:s.title,year:s.year,_preview:p}); }
+  if(picks.length<5){ document.getElementById('t-msg').textContent='No encuentro 5 previews ahora mismo, reintenta.'; return; }
+  picks.forEach(incPlay);
+  T={ placed:[picks[0]], queue:picks.slice(1), score:0, current:null };
+  document.getElementById('t-estado').textContent='Carta de partida: '+picks[0].year;
+  renderTL(); nextCard();
 }
+function renderTL(){ document.getElementById('tl').innerHTML=T.placed.map(c=>'<div class="card"><div class="yr">'+c.year+'</div><div class="ti">'+esc(c.title)+'</div></div>').join(''); }
+function renderSlots(){ const p=T.placed; let h='';
+  for(let g=0; g<=p.length; g++){
+    let label=g===0?'⟵ Antes de '+p[0].year:g===p.length?'Después de '+p[p.length-1].year+' ⟶':'Entre '+p[g-1].year+' y '+p[g].year;
+    h+='<button class="slot" data-gap="'+g+'">'+label+'</button>'; }
+  const w=document.getElementById('t-slots'); w.innerHTML=h;
+  w.querySelectorAll('.slot').forEach(b=>b.addEventListener('click',()=>placeCard(+b.dataset.gap))); }
+function nextCard(){ document.getElementById('t-result').innerHTML='';
+  if(!T.queue.length){ endTemporal(); return; }
+  T.current=T.queue.shift(); document.getElementById('t-now').style.display='block';
+  const n=4-T.queue.length; play4(T.current._preview);
+  document.getElementById('t-msg').textContent='🎧 Canción '+n+' de 4 — ¿dónde va por su año?'; renderSlots(); }
+function placeCard(gap){ pararAudio(); const c=T.current, p=T.placed;
+  const left=gap>0?p[gap-1].year:-Infinity, right=gap<p.length?p[gap].year:Infinity;
+  const ok=(left<=c.year && c.year<=right); const s=getStats();
+  if(ok){ T.score++; s.ok++; } else { s.ko++; addFallada(c); } setStats(s); pintarStats(); pintarLista();
+  let pos=p.findIndex(x=>x.year>c.year); if(pos===-1) pos=p.length; p.splice(pos,0,c); renderTL();
+  document.getElementById('t-now').style.display='none';
+  document.getElementById('t-result').innerHTML=(ok?'✅ ¡Correcto! ':'❌ Casi. ')+'<strong>'+esc(c.title)+'</strong>, '+esc(c.artist)+' ('+c.year+')<button id="t-next">Siguiente ▶</button>';
+  document.getElementById('t-next').addEventListener('click',nextCard); }
+function endTemporal(){ document.getElementById('t-now').style.display='none';
+  document.getElementById('t-result').innerHTML='🏁 Ronda completada: <strong>'+T.score+'/4</strong> bien colocadas.<button id="t-again">🔄 Otra ronda</button>';
+  document.getElementById('t-again').addEventListener('click',startTemporal); }
 
-document.getElementById('nueva').addEventListener('click', nuevaCancion);
-document.getElementById('repetir').addEventListener('click', () => { if (cancion && cancion._preview) sonar(); });
-document.getElementById('revelar').addEventListener('click', revelar);
-document.getElementById('si').addEventListener('click', () => responder(true));
-document.getElementById('no').addEventListener('click', () => responder(false));
-document.getElementById('ver').addEventListener('click', () => {
-  listaEl.style.display = listaEl.style.display === 'block' ? 'none' : 'block';
-});
-document.getElementById('descargar').addEventListener('click', descargarFalladas);
-document.getElementById('vaciar').addEventListener('click', () => {
-  if (confirm('¿Vaciar la lista de falladas?')) { setFalladas([]); pintarStats(); pintarLista(); }
-});
+/* descarga falladas */
+function descargarFalladas(){ const f=getFalladas(); if(!f.length){ estado.textContent='No hay canciones falladas todavía.'; return; }
+  const filas=f.map(s=>{ const q=encodeURIComponent(s.artist+' '+s.title);
+    return '<li><b>'+esc(s.title)+'</b>, '+esc(s.artist)+' ('+s.year+') &nbsp;<a href="https://www.youtube.com/results?search_query='+q+'" target="_blank">YouTube</a>&nbsp;<a href="https://open.spotify.com/search/'+q+'" target="_blank">Spotify</a></li>'; }).join('\n');
+  const html='<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Monister – Falladas</title><style>body{font-family:system-ui;background:#000;color:#fff;padding:24px;line-height:1.6}a{color:#ff2d87}li{margin:8px 0}</style></head><body><h1>Canciones falladas ('+f.length+')</h1><ol>'+filas+'</ol></body></html>';
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html'})); const a=document.createElement('a'); a.href=url; a.download='falladas.html'; a.click(); URL.revokeObjectURL(url); }
 
-pintarStats(); pintarLista();
+/* listeners */
+document.getElementById('m-libre').addEventListener('click',()=>enterLibre('libre',HAS?SONGS:[],'Modo libre · todas'));
+document.getElementById('m-temporal').addEventListener('click',()=>{ showPanel('temporal'); startTemporal(); });
+document.getElementById('m-decadas').addEventListener('click',()=>showPanel('decadas-menu'));
+document.getElementById('m-fallos').addEventListener('click',()=>{ const f=getFalladas(); if(!f.length){ alert('Aún no tienes canciones falladas.'); return; } enterLibre('fallos',f.slice(),'Solo fallos · '+f.length); });
+document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showPanel('menu')));
+document.getElementById('nueva').addEventListener('click',nuevaCancion);
+document.getElementById('repetir').addEventListener('click',()=>{ if(cancion&&cancion._preview) play4(cancion._preview); });
+document.getElementById('revelar').addEventListener('click',revelar);
+document.getElementById('si').addEventListener('click',()=>responder(true));
+document.getElementById('no').addEventListener('click',()=>responder(false));
+document.getElementById('t-play').addEventListener('click',()=>{ if(T&&T.current&&T.current._preview) play4(T.current._preview); });
+document.getElementById('t-rep').addEventListener('click',()=>{ if(T&&T.current&&T.current._preview) play4(T.current._preview); });
+document.getElementById('ver').addEventListener('click',()=>{ listaEl.style.display=listaEl.style.display==='block'?'none':'block'; });
+document.getElementById('descargar').addEventListener('click',descargarFalladas);
+document.getElementById('vaciar').addEventListener('click',()=>{ if(confirm('¿Vaciar la lista de falladas?')){ setFalladas([]); pintarStats(); pintarLista(); } });
+
+buildDecades(); showPanel('menu'); pintarStats(); pintarLista();
 </script>
-<script src="songs.js"></script>
 </body>
 </html>
