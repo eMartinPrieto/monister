@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entreno musical</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 32px auto; padding: 0 16px; text-align: center; }
+  h1 { font-size: 22px; }
+  button { font-size: 17px; padding: 14px; width: 100%; box-sizing: border-box; margin: 6px 0; border:0; border-radius:10px; cursor:pointer; }
+  #nueva { background:#5b21b6; color:#fff; }
+  #repetir { background:#ede9fe; color:#5b21b6; }
+  #revelar { background:#f3f4f6; }
+  #estado { margin-top:14px; min-height:24px; font-size:15px; }
+  #respuesta { margin-top:14px; padding:14px; background:#f0fdf4; border-radius:10px; font-weight:600; display:none; }
+</style>
+</head>
+<body>
+  <h1>🎧 Entreno para el concurso</h1>
+  <p>Pulsa "Nueva canción", escucha 4 segundos e intenta adivinarla. Luego revela.</p>
+
+  <button id="nueva">▶️ Nueva canción</button>
+  <button id="repetir">🔁 Repetir 4 segundos</button>
+  <button id="revelar">👁️ Revelar respuesta</button>
+
+  <div id="estado">Listo para empezar.</div>
+  <div id="respuesta"></div>
+
+<script>
+// ===== TU BASE DE DATOS (de momento aquí dentro) =====
+// Solo 3 campos: artista, título y año. Cambia/añade lo que quieras.
+const SONGS = [
+  { artist: "Queen",             title: "Bohemian Rhapsody",     year: 1975 },
+  { artist: "ABBA",              title: "Dancing Queen",         year: 1976 },
+  { artist: "Survivor",          title: "Eye of the Tiger",      year: 1982 },
+  { artist: "Mecano",            title: "Hijo de la Luna",       year: 1986 },
+  { artist: "Alaska y Dinarama", title: "A quién le importa",    year: 1986 },
+  { artist: "Nirvana",           title: "Smells Like Teen Spirit", year: 1991 },
+  { artist: "Los del Río",       title: "Macarena",              year: 1993 },
+  { artist: "Mocedades",         title: "Eres tú",               year: 1973 },
+  { artist: "Coldplay",          title: "Viva la Vida",          year: 2008 },
+  { artist: "Rosalía",           title: "Malamente",             year: 2018 }
+];
+// =====================================================
+
+const estado = document.getElementById('estado');
+const respuesta = document.getElementById('respuesta');
+let cancion = null;
+let audio = null;
+
+// Llama a iTunes con JSONP (evita problemas de CORS en el navegador)
+function buscarItunes(termino) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const t = setTimeout(() => { limpiar(); reject(new Error('tiempo agotado')); }, 8000);
+    function limpiar() { clearTimeout(t); delete window[cb]; script.remove(); }
+    window[cb] = (data) => { limpiar(); resolve(data.results || []); };
+    script.onerror = () => { limpiar(); reject(new Error('red')); };
+    script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(termino) +
+                 '&media=music&entity=song&limit=5&callback=' + cb;
+    document.body.appendChild(script);
+  });
+}
+
+function pararAudio() { if (audio) { audio.pause(); audio = null; } }
+
+function sonar() {
+  pararAudio();
+  audio = new Audio(cancion._preview);
+  audio.play()
+    .then(() => estado.textContent = '🔊 Sonando 4 segundos... ¿qué canción es?')
+    .catch(e => estado.textContent = 'No se pudo reproducir: ' + e.message);
+  setTimeout(pararAudio, 4000); // cortamos a los 4s
+}
+
+async function nuevaCancion() {
+  pararAudio();
+  respuesta.style.display = 'none';
+  estado.textContent = 'Cargando...';
+  cancion = SONGS[Math.floor(Math.random() * SONGS.length)];
+
+  if (!cancion._preview) { // si no la habíamos resuelto ya
+    try {
+      const res = await buscarItunes(cancion.artist + ' ' + cancion.title);
+      const hit = res.find(r => r.previewUrl);
+      if (!hit) {
+        estado.textContent = '😕 Sin preview en iTunes: ' + cancion.artist + ' – ' + cancion.title +
+                             '\n(apunta cuáles fallan, lo afinamos en el Paso 2)';
+        return;
+      }
+      cancion._preview = hit.previewUrl;
+    } catch (e) {
+      estado.textContent = 'Error de red (' + e.message + '). ¿Tienes internet?';
+      return;
+    }
+  }
+  sonar();
+}
+
+function revelar() {
+  if (!cancion || !cancion._preview) return;
+  respuesta.style.display = 'block';
+  respuesta.textContent = '✅ ' + cancion.artist + ' – ' + cancion.title + ' (' + cancion.year + ')';
+}
+
+document.getElementById('nueva').addEventListener('click', nuevaCancion);
+document.getElementById('repetir').addEventListener('click', () => { if (cancion && cancion._preview) sonar(); });
+document.getElementById('revelar').addEventListener('click', revelar);
+</script>
+</body>
+</html>
