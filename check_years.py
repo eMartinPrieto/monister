@@ -4,7 +4,7 @@ import re, time, json, urllib.parse, urllib.request
 SONGS_FILE = "songs.js"
 OUT_FILE   = "informe_anos.md"
 TOLERANCE  = 1  # margen de años antes de marcar como sospechosa
-UA = "Monister-YearChecker/1.0 ( eMartinPrieto )"  # pon aquí tu usuario o email
+UA = "paraelpan@gmail.com"  # pon aquí tu usuario o email
 
 def load_songs(path):
     raw = open(path, encoding="utf-8").read()
